@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#003153" />
+  <meta name="description" content="Anshika's private collection of classical dance and personal moments." />
+  <title>Anshika · A Collection of Moments</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="ambient" aria-hidden="true">
+    <span class="ambient__orb ambient__orb--one"></span>
+    <span class="ambient__orb ambient__orb--two"></span>
+    <span class="ambient__grain"></span>
+  </div>
+
+  <!-- ============ FIRST RUN: SET PIN ============ -->
+  <section id="setupScreen" class="gate" hidden>
+    <div class="gate__card">
+      <div class="gate__mark">A</div>
+      <p class="eyebrow">A little something just for you</p>
+      <h1 class="gate__title">Make it <em>yours.</em></h1>
+      <p class="gate__text">Choose a secret 4–6 digit PIN. It keeps your memories behind a door only you can open.</p>
+
+      <form id="setupForm" class="gate__form" autocomplete="off">
+        <label class="field">
+          <span>Your secret PIN</span>
+          <input id="setupPin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" placeholder="••••" required />
+        </label>
+        <label class="field">
+          <span>Confirm PIN</span>
+          <input id="setupPinConfirm" type="password" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" placeholder="••••" required />
+        </label>
+        <p id="setupError" class="form-error" role="alert" hidden></p>
+        <button class="btn btn--gold btn--full" type="submit">Create my private space <span aria-hidden="true">→</span></button>
+      </form>
+
+      <p class="gate__foot">Made with love, for Anshika ♥</p>
+    </div>
+  </section>
+
+  <!-- ============ PIN LOCK ============ -->
+  <section id="lockScreen" class="gate" hidden>
+    <div class="gate__card gate__card--lock">
+      <div class="gate__mark">A</div>
+      <p class="eyebrow">Welcome back</p>
+      <h1 class="gate__title">Your <em>private</em> world.</h1>
+      <p class="gate__text">Enter your PIN to step inside.</p>
+
+      <div class="pin-dots" id="pinDots" aria-label="PIN entered" aria-live="polite"></div>
+      <p id="lockError" class="form-error form-error--center" role="alert" hidden></p>
+
+      <div class="keypad" id="keypad">
+        <button type="button" data-key="1">1</button>
+        <button type="button" data-key="2">2</button>
+        <button type="button" data-key="3">3</button>
+        <button type="button" data-key="4">4</button>
+        <button type="button" data-key="5">5</button>
+        <button type="button" data-key="6">6</button>
+        <button type="button" data-key="7">7</button>
+        <button type="button" data-key="8">8</button>
+        <button type="button" data-key="9">9</button>
+        <button type="button" class="keypad__util" data-action="clear">Clear</button>
+        <button type="button" data-key="0">0</button>
+        <button type="button" class="keypad__util" data-action="delete" aria-label="Delete last digit">⌫</button>
+      </div>
+
+      <button class="btn btn--gold btn--full" id="unlockBtn" type="button">Unlock <span aria-hidden="true">→</span></button>
+      <p class="gate__foot">Forgot your PIN? <button class="linkish" id="forgotPinBtn" type="button">Reset it here</button></p>
+      <p class="gate__foot">Here to leave her a wish? <button class="linkish" id="publicWishBtn" type="button">Write a note 🌸</button></p>
+      <p id="cloudWarning" class="cloud-warning" hidden></p>
+    </div>
+  </section>
+
+  <!-- ============ PUBLIC WISHES (no PIN needed) ============ -->
+  <section id="publicWishes" class="gate" hidden>
+    <div class="public-wishes__card">
+      <div class="gate__mark">🌸</div>
+      <p class="eyebrow">For Anshika, from you</p>
+      <h1 class="gate__title">Leave a little <em>wish.</em></h1>
+      <p class="gate__text">She'll read every word on her birthday.</p>
+      <form id="publicWishForm" class="wish-form wish-form--public">
+        <label class="field"><span>Your name</span><input id="publicWishName" type="text" maxlength="40" placeholder="A friend" required /></label>
+        <label class="field"><span>Your wish</span><textarea id="publicWishMessage" rows="4" maxlength="300" placeholder="Write something lovely..." required></textarea></label>
+        <p id="publicWishError" class="form-error" role="alert" hidden></p>
+        <button class="btn btn--gold btn--full" type="submit">Pin it to her wall 🌸</button>
+      </form>
+      <div id="publicWishList" class="wish-wall wish-wall--public"></div>
+      <p class="gate__foot"><button class="linkish" id="backToLockBtn" type="button">← Back to the private entrance</button></p>
+    </div>
+  </section>
+
+  <!-- ============ SECRET NOTE MODAL ============ -->
+  <div class="modal" id="noteModal" hidden>
+    <div class="modal__backdrop" data-close="noteModal"></div>
+    <div class="modal__card modal__card--note" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+      <div class="modal__head">
+        <p class="eyebrow">You found the little lamp 🪔</p>
+        <button class="icon-btn icon-btn--plain" data-close="noteModal" type="button" aria-label="Close">✕</button>
+      </div>
+      <h2 id="noteTitle" class="note-title">For you, always.</h2>
+      <p class="note-body">I will never ever put my ego in front of you. Every year — today and all the ones after — I'll keep it aside and wish you every good thing, quietly and completely. You deserve that, and more.</p>
+      <p class="note-body note-body--sign">Because I'm just a man in love. ♥</p>
+      <p class="note-foot">24 September 2008 — the day the world got a little more graceful.</p>
+    </div>
+  </div>
+
+  <!-- ============ BIRTHDAY CAPSULE MODAL ============ -->
+  <div class="modal" id="capsuleModal" hidden>
+    <div class="modal__backdrop" data-close="capsuleModal"></div>
+    <div class="modal__card modal__card--note" role="dialog" aria-modal="true" aria-labelledby="capsuleTitle">
+      <div class="modal__head">
+        <p class="eyebrow">Happy birthday, Anshika 🎂</p>
+        <button class="icon-btn icon-btn--plain" data-close="capsuleModal" type="button" aria-label="Close">✕</button>
+      </div>
+      <h2 id="capsuleTitle" class="note-title">The seal is broken.</h2>
+      <p class="note-body">Twenty-four years of you, and somehow the world still feels like it's learning what you can do.</p>
+      <p class="note-body note-body--sign">Today, every raga, every step and every light is for you. I hope you know that. ♥</p>
+      <p class="note-foot">24 September — my favourite date on the calendar.</p>
+    </div>
+  </div>
+
+  <!-- ============ MAIN APP ============ -->
+  <div id="app" class="app" hidden>
+
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="#" aria-label="Anshika home">
+          <span class="brand__mark">A</span>
+          <span class="brand__text">
+            <strong>Anshika</strong>
+            <small>Nritya Diary · Her Raga, Her Rhythm</small>
+          </span>
+        </a>
+
+        <nav class="topnav" aria-label="Gallery filters">
+          <button class="topnav__btn is-active" data-filter="all" type="button">All</button>
+          <button class="topnav__btn" data-filter="photos" type="button">Photos</button>
+          <button class="topnav__btn" data-filter="videos" type="button">Videos</button>
+          <button class="topnav__btn" data-filter="behind" type="button">Behind the Stage</button>
+          <button class="topnav__btn" data-filter="practice" type="button">Practice</button>
+          <button class="topnav__btn" data-filter="costume" type="button">Costume & Jewellery</button>
+        </nav>
+
+        <div class="topbar__actions">
+          <span class="mode-pill" id="modePill" title="Where memories are stored">This device</span>
+          <button class="icon-btn" id="settingsBtn" type="button" aria-label="Settings" title="Settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.64a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.36 9v.02A1.7 1.7 0 0 0 20.92 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          </button>
+          <button class="btn btn--gold btn--small" id="uploadBtn" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Add memories
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- HERO -->
+      <section class="hero hero--photo">
+        <div class="hero__photo" aria-hidden="true"></div>
+        <div class="hero__scrim" aria-hidden="true"></div>
+        <div class="hero__copy">
+          <p class="eyebrow"><span class="eyebrow__line"></span> Bells, Boundaries &amp; Beautiful Chaos</p>
+          <h1 class="hero__title"><em>Anshika</em></h1>
+          <p class="hero__tagline">Where rhythm lives and stories dance.</p>
+          <p class="hero__text">Every step, every spin, every quiet smile — kept safe in one little corner of the internet that belongs only to you.</p>
+
+          <div class="birthday-pill">
+            <span class="birthday-pill__cake" aria-hidden="true">🎂</span>
+            <span>Born <strong>24 September 2008</strong></span>
+            <span class="birthday-pill__sep">·</span>
+            <span>next birthday in <strong id="birthdayCountdown">—</strong> days</span>
+          </div>
+
+          <div class="hero__stats">
+            <div class="stat"><strong id="statAll">0</strong><span>memories</span></div>
+            <div class="stat"><strong id="statDance">0</strong><span>dance moments</span></div>
+            <div class="stat"><strong id="statPersonal">0</strong><span>personal moments</span></div>
+            <div class="stat"><strong id="statDays">—</strong><span>days on stage</span></div>
+          </div>
+
+          <div class="hero__buttons">
+            <button class="btn btn--gold" id="heroUploadBtn" type="button">Upload a memory</button>
+            <button class="btn btn--ghost" data-jump="gallery" type="button">Browse the gallery <span aria-hidden="true">↓</span></button>
+          </div>
+        </div>
+
+        <button class="hero__sound" id="soundToggle" type="button" aria-label="Toggle ghungroo chime" title="A little ghungroo chime 🔔">🔕</button>
+        <button class="hero__scroll" data-jump="gallery" type="button">scroll to explore <span aria-hidden="true">↓</span></button>
+      </section>
+
+      <!-- CATEGORY CARDS -->
+      <section class="categories" aria-label="Collections">
+        <article class="category-card category-card--dance">
+          <div class="category-card__glow"></div>
+          <div class="category-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M24 7c6 4 9 10 8 17-1 6-5 11-12 17-7-6-11-11-12-17-1-7 2-13 8-17Z"/><circle cx="24" cy="17" r="3"/><path d="M15 24c-4 1-7 4-9 8m27-8c4 1 7 4 9 8M12 41h24"/></svg>
+          </div>
+          <p class="category-card__eyebrow">Collection 01</p>
+          <h2>Classical Dance</h2>
+          <p class="category-card__text">The stage, the mudras, the rhythm in her feet. All of it, forever.</p>
+          <div class="category-card__footer">
+            <span><strong id="countDance">0</strong> memories</span>
+            <button class="text-btn" data-upload-category="dance" type="button">Add photos <span aria-hidden="true">→</span></button>
+          </div>
+        </article>
+
+        <article class="category-card category-card--personal">
+          <div class="category-card__glow"></div>
+          <div class="category-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path d="M24 40S7 30 7 18a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 12-17 22-17 22Z"/><path d="M17 24h14M24 17v14"/></svg>
+          </div>
+          <p class="category-card__eyebrow">Collection 02</p>
+          <h2>Personal Moments</h2>
+          <p class="category-card__text">The in-between bits — laughter, journeys, and everyday magic.</p>
+          <div class="category-card__footer">
+            <span><strong id="countPersonal">0</strong> memories</span>
+            <button class="text-btn" data-upload-category="personal" type="button">Add photos <span aria-hidden="true">→</span></button>
+          </div>
+        </article>
+      </section>
+
+      <!-- GALLERY -->
+      <section class="gallery-section" id="gallery">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__line"></span> The collection</p>
+            <h2 class="section-title" id="galleryTitle">All memories</h2>
+          </div>
+          <div class="gallery-tools">
+            <label class="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="searchInput" type="search" placeholder="Search a memory..." aria-label="Search memories" />
+            </label>
+            <button class="icon-btn" id="refreshBtn" type="button" aria-label="Refresh gallery" title="Refresh">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="galleryGrid" class="gallery-grid"></div>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <div class="empty-state__art" aria-hidden="true">
+            <svg viewBox="0 0 160 160"><circle cx="80" cy="80" r="62" fill="none" stroke="currentColor" stroke-width="1" opacity=".25"/><circle cx="80" cy="80" r="48" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 6" opacity=".45"/><path d="M80 48c8 6 12 14 11 24-1 8-6 15-15 23-9-8-14-15-15-23-1-10 3-18 11-24Z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="80" cy="63" r="4" fill="currentColor"/><path d="M62 82c-6 2-10 6-12 12m48-12c6 2 10 6 12 12M60 108h40" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+          </div>
+          <h3 id="emptyTitle">The stage is yours.</h3>
+          <p id="emptyText">Add your first photo or video and it will appear right here.</p>
+          <button class="btn btn--gold" id="emptyUploadBtn" type="button">Add the first memory</button>
+        </div>
+      </section>
+
+      <!-- DANCE SPOTLIGHT -->
+      <section class="spotlight" id="spotlight">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__line"></span> The dance behind the photos</p>
+            <h2 class="section-title">Her Dance Spotlight</h2>
+          </div>
+          <p class="section-aside">Mudra, raga, rhythm — the little language she speaks with her whole heart.</p>
+        </div>
+
+        <div class="spotlight__grid">
+          <article class="spot-card spot-card--mudra">
+            <p class="card-eyebrow">Mudra of the day</p>
+            <h3>Speak with your hands</h3>
+            <p class="spot-card__note">Tap a gesture to learn what it says.</p>
+            <div id="mudraList" class="mudra-list"></div>
+            <div class="mudra-detail">
+              <div class="mudra-detail__symbol" id="mudraSymbol" aria-hidden="true">☝</div>
+              <div>
+                <strong id="mudraName">Anjali</strong>
+                <p id="mudraMeaning">Greeting and reverence — palms meeting like a quiet hello.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="spot-card spot-card--raga">
+            <p class="card-eyebrow">Raga wall</p>
+            <h3>Melodies she carries</h3>
+            <p class="spot-card__note">Press play for a tiny taste of each mood.</p>
+            <div id="ragaWall" class="raga-wall"></div>
+          </article>
+        </div>
+
+        <div class="quiz-card" id="quizCard">
+          <div class="quiz-card__intro">
+            <p class="card-eyebrow">A tiny game for you</p>
+            <h3>Guess the raga</h3>
+            <p class="spot-card__note">I'll play a few notes. You tell me which mood they belong to.</p>
+          </div>
+          <div class="quiz-card__play">
+            <button class="raga-play raga-play--big" id="quizPlay" type="button" aria-label="Play the mystery raga">▶</button>
+            <span id="quizFeedback">Press play to begin 🎶</span>
+          </div>
+          <div class="quiz-options" id="quizOptions"></div>
+          <div class="quiz-score">score <strong id="quizScore">0</strong> / 5</div>
+        </div>
+
+        <div class="spotlight__lower">
+          <article class="story-panel">
+            <p class="card-eyebrow">The journey</p>
+            <h3>A thread of small beginnings</h3>
+            <div id="timeline" class="timeline"></div>
+          </article>
+          <article class="story-panel">
+            <p class="card-eyebrow">My inspirations</p>
+            <h3>The voices that keep her dancing</h3>
+            <div id="inspirationGrid" class="quote-grid"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- LITTLE EXTRAS -->
+      <section class="extras" id="extras">
+        <div class="extras__grid">
+          <article class="extra-card">
+            <p class="card-eyebrow">Currently learning</p>
+            <h3>New steps, always</h3>
+            <p id="currentLearning" class="extra-card__body"></p>
+            <span class="extra-card__foot">updated with love ✦</span>
+          </article>
+          <article class="extra-card">
+            <p class="card-eyebrow">Where she's danced</p>
+            <h3>Little pins on a big map</h3>
+            <div id="placeList" class="place-list"></div>
+          </article>
+          <article class="extra-card extra-card--playlist">
+            <p class="card-eyebrow">The pre-stage playlist</p>
+            <h3>What I listen to before going on stage</h3>
+            <div id="playlistBox" class="playlist-box"></div>
+          </article>
+        </div>
+
+        <div class="testimonials">
+          <div class="testimonials__head">
+            <div>
+              <p class="card-eyebrow">Words from her people</p>
+              <h3>Kind things, kept close</h3>
+            </div>
+            <div class="testimonials__nav">
+              <button class="icon-btn" id="testPrev" type="button" aria-label="Previous quote">‹</button>
+              <button class="icon-btn" id="testNext" type="button" aria-label="Next quote">›</button>
+            </div>
+          </div>
+          <div class="testimonial-track" id="testimonialTrack"></div>
+        </div>
+      </section>
+
+      <!-- WISHES WALL -->
+      <section class="wishes" id="wishes">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__line"></span> For you, from everyone</p>
+            <h2 class="section-title">The Wishes Wall</h2>
+          </div>
+          <p class="section-aside">Little notes from the people cheering in the front row.</p>
+        </div>
+        <div class="wishes__layout">
+          <form id="wishForm" class="wish-form">
+            <h3>Leave a petal for Anshika</h3>
+            <label class="field"><span>Your name</span><input id="wishName" type="text" maxlength="40" placeholder="A friend" required /></label>
+            <label class="field"><span>Your wish</span><textarea id="wishMessage" rows="4" maxlength="300" placeholder="Something you'd want her to read on her birthday..." required></textarea></label>
+            <p id="wishError" class="form-error" role="alert" hidden></p>
+            <button class="btn btn--gold" type="submit">Pin it to the wall 🌸</button>
+          </form>
+          <div id="wishList" class="wish-wall"></div>
+        </div>
+      </section>
+
+      <!-- 24 REASONS -->
+      <section class="reasons" id="reasons">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow"><span class="eyebrow__line"></span> 24 September</p>
+            <h2 class="section-title">24 reasons</h2>
+          </div>
+          <p class="section-aside">One for every year you've been making the world more beautiful. Tap a card to turn it over.</p>
+        </div>
+        <div id="reasonGrid" class="reason-grid"></div>
+      </section>
+
+      <!-- BIRTHDAY TIME CAPSULE -->
+      <section class="capsule-section">
+        <button class="capsule" id="capsule" type="button" aria-label="A sealed birthday letter">
+          <span class="capsule__seal">24 · 09</span>
+          <span class="capsule__body">A letter for your birthday</span>
+          <small id="capsuleHint">sealed until 24 September</small>
+        </button>
+      </section>
+
+      <!-- THE FINAL NOTE -->
+      <section class="final-note">
+        <div class="final-note__inner">
+          <p class="eyebrow"><span class="eyebrow__line"></span> One last thing</p>
+
+          <div class="letter" id="letter">
+            <div id="letterLines"></div>
+            <button class="btn btn--ghost btn--small" id="readLetterBtn" type="button">▶ Read me aloud</button>
+          </div>
+
+          <div class="voice-note" id="voiceNote">
+            <div class="voice-note__icon" aria-hidden="true">🎧</div>
+            <div class="voice-note__body">
+              <strong>A voice note, just for you</strong>
+              <small id="voiceNoteHint">I made this for you — press play whenever you like 🎧</small>
+              <audio id="voiceAudio" preload="metadata"></audio>
+              <div class="voice-note__controls">
+                <button class="btn btn--gold btn--small" id="voicePlayBtn" type="button">▶ Play voice note</button>
+                <input id="voiceSeek" type="range" min="0" max="100" value="0" aria-label="Voice note position" />
+                <span id="voiceTime">0:00</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="final-note__sign">— always, for Anshika ♥</p>
+          <button class="diya" id="diyaTrigger" type="button" aria-label="Light a hidden diya" title="A little secret for you 🪔">
+            <span class="diya__flame" aria-hidden="true"></span>
+            <span class="diya__bowl" aria-hidden="true"></span>
+          </button>
+          <small class="final-note__hint">there is a tiny lamp here. light it if you like 🪔</small>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Made with <span class="heart">♥</span> for Anshika</span>
+      <span class="footer__dot">·</span>
+      <span>May you always dance like nobody's watching.</span>
+    </footer>
+  </div>
+
+  <!-- ============ UPLOAD MODAL ============ -->
+  <div class="modal" id="uploadModal" hidden>
+    <div class="modal__backdrop" data-close="uploadModal"></div>
+    <div class="modal__card modal__card--upload" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+      <div class="modal__head">
+        <div>
+          <p class="eyebrow">Add to your collection</p>
+          <h2 id="uploadTitle">A new memory</h2>
+        </div>
+        <button class="icon-btn icon-btn--plain" data-close="uploadModal" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <form id="uploadForm">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose photos or videos">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <strong>Drop photos & videos here</strong>
+          <span>or click to browse from your device</span>
+          <small id="sizeHint">Videos up to 50 MB on the free cloud plan</small>
+          <input id="fileInput" type="file" accept="image/*,video/*" multiple hidden />
+        </div>
+
+        <div class="upload-options">
+          <label class="field">
+            <span>Put it in</span>
+            <select id="uploadCategory">
+              <option value="dance">Classical Dance</option>
+              <option value="personal">Personal Moments</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Moment type</span>
+            <select id="uploadTag">
+              <option value="stage">On Stage</option>
+              <option value="behind">Behind the Stage</option>
+              <option value="practice">Practice Room</option>
+              <option value="costume">Costume &amp; Jewellery</option>
+            </select>
+          </label>
+          <label class="field field--wide">
+            <span>A little caption <small>(optional)</small></span>
+            <input id="uploadCaption" type="text" maxlength="120" placeholder="e.g. Arangetram, 2023 — the moment I forgot the audience." />
+          </label>
+        </div>
+
+        <ul id="fileList" class="file-list"></ul>
+        <p id="uploadError" class="form-error" role="alert" hidden></p>
+
+        <div class="modal__foot">
+          <button class="btn btn--ghost" data-close="uploadModal" type="button">Cancel</button>
+          <button class="btn btn--gold" id="doUploadBtn" type="submit" disabled><span id="uploadBtnLabel">Upload</span> <span id="uploadCount"></span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ LIGHTBOX ============ -->
+  <div class="modal modal--lightbox" id="lightboxModal" hidden>
+    <div class="modal__backdrop" data-close="lightboxModal"></div>
+    <button class="lightbox__nav lightbox__nav--prev" id="lightPrev" type="button" aria-label="Previous memory">‹</button>
+    <button class="lightbox__nav lightbox__nav--next" id="lightNext" type="button" aria-label="Next memory">›</button>
+    <div class="lightbox" role="dialog" aria-modal="true" aria-label="Memory viewer">
+      <div class="lightbox__stage" id="lightStage"></div>
+      <div class="lightbox__bar">
+        <div class="lightbox__info">
+          <span class="lightbox__badge" id="lightCategory"></span>
+          <p id="lightCaption" class="lightbox__caption"></p>
+          <small id="lightMeta"></small>
+        </div>
+        <div class="lightbox__actions">
+          <button class="icon-btn" id="editCaptionBtn" type="button" aria-label="Edit caption" title="Edit caption">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4-1 11-11-3-3L5 16l-1 4Z"/><path d="m14 6 3 3"/></svg>
+          </button>
+          <button class="icon-btn" id="downloadBtn" type="button" aria-label="Download" title="Download">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 20h16"/></svg>
+          </button>
+          <button class="icon-btn icon-btn--danger" id="deleteBtn" type="button" aria-label="Delete" title="Delete">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v6m4-6v6"/></svg>
+          </button>
+          <button class="icon-btn icon-btn--plain" data-close="lightboxModal" type="button" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div class="modal" id="settingsModal" hidden>
+    <div class="modal__backdrop" data-close="settingsModal"></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal__head">
+        <div>
+          <p class="eyebrow">The little control room</p>
+          <h2 id="settingsTitle">Settings</h2>
+        </div>
+        <button class="icon-btn icon-btn--plain" data-close="settingsModal" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="settings-block">
+        <h3>Where memories are saved</h3>
+        <p class="settings-note">Connect a free Supabase project to access your gallery from any phone or laptop. Leave it blank to keep everything on this device.</p>
+        <div class="storage-meter" id="storageMeter" hidden>
+          <div class="storage-meter__head"><span>Cloud space used</span><strong id="storageUsed">0 MB / 1 GB</strong></div>
+          <div class="storage-meter__track"><span id="storageBar"></span></div>
+          <small id="storageTip">Images are compressed before upload so your space lasts longer.</small>
+        </div>
+        <form id="cloudForm" autocomplete="off">
+          <label class="field"><span>Project URL</span><input id="supabaseUrl" type="url" placeholder="https://xxxx.supabase.co" /></label>
+          <label class="field"><span>Anon key</span><input id="supabaseKey" type="text" placeholder="eyJhbGci..." /></label>
+          <label class="field"><span>Storage bucket</span><input id="supabaseBucket" type="text" value="anshika-media" placeholder="anshika-media" /></label>
+          <p id="cloudError" class="form-error" role="alert" hidden></p>
+          <div class="settings-actions">
+            <button class="btn btn--gold btn--small" type="submit">Save & connect</button>
+            <button class="btn btn--ghost btn--small" id="useLocalBtn" type="button">Use this device only</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="settings-block settings-block--border">
+        <h3>Little details</h3>
+        <p class="settings-note">Change what she's learning and her pre-stage playlist any time.</p>
+        <form id="detailsForm">
+          <label class="field"><span>Currently learning</span><input id="learningInput" type="text" maxlength="120" placeholder="A new adavu, a harder raga..." /></label>
+          <label class="field"><span>YouTube playlist link</span><input id="playlistInput" type="url" placeholder="https://www.youtube.com/playlist?list=..." /></label>
+          <label class="field"><span>Voice note <small>(MP3 or M4A — optional)</small></span><input id="voiceInput" type="file" accept="audio/*" /></label>
+          <div class="settings-actions"><button class="btn btn--ghost btn--small" type="submit">Save little details</button></div>
+        </form>
+      </div>
+
+      <div class="settings-block settings-block--border">
+        <h3>Your secret PIN</h3>
+        <p class="settings-note">Change it any time. You'll need the current PIN first.</p>
+        <form id="pinChangeForm" autocomplete="off">
+          <label class="field"><span>Current PIN</span><input id="oldPin" type="password" inputmode="numeric" maxlength="6" required /></label>
+          <label class="field"><span>New PIN</span><input id="newPin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" required /></label>
+          <p id="pinChangeError" class="form-error" role="alert" hidden></p>
+          <button class="btn btn--ghost btn--small" type="submit">Update PIN</button>
+        </form>
+      </div>
+
+      <div class="settings-block settings-block--border settings-block--last">
+        <h3>Take a break?</h3>
+        <p class="settings-note">Lock the gallery instantly. Your memories stay right where they are.</p>
+        <button class="btn btn--ghost btn--small" id="lockNowBtn" type="button">Lock the gallery</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
