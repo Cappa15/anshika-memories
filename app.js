@@ -777,6 +777,40 @@
     const pill = el('modePill');
     pill.textContent = state.mode === 'cloud' ? 'Synced everywhere' : 'This device';
     pill.classList.toggle('is-cloud', state.mode === 'cloud');
+    const alert = el('cloudAlert');
+    if (!alert) return;
+    if (state.mode === 'cloud' || localStorage.getItem(STORE.disableCloud) === '1') {
+      alert.hidden = true;
+    } else {
+      el('cloudAlertText').textContent = 'Cloud isn’t reachable, so new memories are only being saved on this device. ' +
+        (state.cloudIssue || 'Check your internet, then tap Retry.') +
+        ' If you already uploaded here, those photos will move to the cloud automatically once it connects.';
+      alert.hidden = false;
+    }
+  }
+
+  async function retryCloud() {
+    const cfg = savedCloudConfig();
+    if (!cfg.url || !cfg.key || !window.supabase) { toast('Cloud setup is missing.', true); return; }
+    state.supabase = null;
+    state.cloudIssue = '';
+    if (await ensureClient()) {
+      try {
+        await cloudPin();
+        state.mode = 'cloud';
+      } catch (error) {
+        state.mode = 'local';
+        state.cloudIssue = (error && error.message) || 'Could not reach Supabase.';
+      }
+    }
+    updateModePill();
+    await loadItems();
+    if (state.mode === 'cloud') {
+      setTimeout(migrateLocalToCloud, 500);
+      toast('Connected! Memories now sync everywhere ♥');
+    } else {
+      toast('Still offline: ' + state.cloudIssue, true);
+    }
   }
 
   /* -------------------------------------------------------
@@ -1428,6 +1462,7 @@
 
     ['uploadBtn', 'heroUploadBtn', 'emptyUploadBtn'].forEach((id) => el(id).addEventListener('click', () => openUpload()));
     el('refreshBtn').addEventListener('click', async () => { await loadItems(); toast('Gallery refreshed.'); });
+    el('retryCloudBtn')?.addEventListener('click', retryCloud);
     el('searchInput').addEventListener('input', (event) => { state.query = event.target.value; render(); });
 
     /* Modals */
