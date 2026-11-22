@@ -337,6 +337,38 @@
     render();
   }
 
+  // One-time move: photos saved on this device before the cloud was connected
+  // are copied up automatically, so nothing is left behind on one phone.
+  let migrationDone = false;
+  async function migrateLocalToCloud() {
+    if (migrationDone || state.mode !== 'cloud' || !state.supabase) return;
+    migrationDone = true;
+    let moved = 0;
+    try {
+      const locals = await idbAll();
+      for (const item of locals) {
+        if (!item.blob || item.blob.size > CLOUD_FILE_LIMIT) continue; // big videos stay here
+        const payload = {
+          blob: item.blob,
+          fileName: item.file_name || 'photo.jpg',
+          mimeType: item.mime_type || item.blob.type || 'application/octet-stream',
+          kind: item.kind || 'photo'
+        };
+        try {
+          await uploadToCloud(payload, item.category || 'personal', item.caption || '', item.tag || 'stage');
+          await idbRemove(item.id);
+          moved++;
+        } catch (error) {
+          console.warn('Could not move one device memory to the cloud:', error);
+        }
+      }
+      if (moved) {
+        await loadItems();
+        toast(moved + (moved === 1 ? ' old memory moved' : ' old memories moved') + ' to your shared cloud ♥');
+      }
+    } catch (_) { /* device storage unavailable — nothing to move */ }
+  }
+
   function revokeUnusedUrls() {
     state.objectUrls.forEach((url, id) => {
       if (id === state.lightId) return;
@@ -702,6 +734,7 @@
     renderCountdowns();
     renderWishes();
     loadItems();
+    if (state.mode === 'cloud') setTimeout(migrateLocalToCloud, 1200);
   }
 
   function showLock(message) {
@@ -1512,6 +1545,7 @@
         updateModePill();
         closeModal('settingsModal');
         await loadItems();
+        setTimeout(migrateLocalToCloud, 800);
         toast('Connected! Your gallery now travels with you.');
       } catch (error) {
         errorBox.textContent = 'Could not connect: ' + error.message + '. Did you run the setup SQL?';
