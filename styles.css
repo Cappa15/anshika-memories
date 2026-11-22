@@ -318,6 +318,16 @@ svg {
 }
 .mode-pill.is-cloud { color: var(--gold-light); border-color: var(--line-gold); }
 
+.cloud-alert {
+  max-width: 1240px; margin: 14px auto 0; padding: 11px 16px;
+  border-radius: 12px; border: 1px solid rgba(255,160,120,.45);
+  background: rgba(90,30,24,.5); color: #ffd7c4;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  font-size: 12px; line-height: 1.45;
+}
+.cloud-alert span { flex: 1; }
+.cloud-alert[hidden] { display: none; }
+
 .main { max-width: 1240px; margin: 0 auto; padding: 0 26px 70px; }
 
 /* ---------- Hero ---------- */
