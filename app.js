@@ -104,9 +104,19 @@
   // Cloud is built in, so every device shares the same memories and PIN.
   // Changing these later only requires editing this file and re-uploading it.
   const BAKED_CLOUD = {
-    url: 'https://cecggykisnuxbvgbmfh.supabase.co',
-    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlZ2NnZ3lraXNudXhidmdibWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNjMxMzAsImV4cCI6MjExMDkzOTEzMH0.IBhIB34887-QmHhda2r_4oijadri8c-IjiZlX5zSM9g'
+    url: 'https://cegcggykisnuxbvgbmfh.supabase.co',
+    key: 'sb_publishable_rwXJ_MGU4PnCN7cOCrWDKg_YSTHI3zF'
   };
+
+  // One-time cleanup: clear any saved config pointing at the earlier broken project URL.
+  try {
+    const stale = localStorage.getItem(STORE.url) || '';
+    if (stale.includes('cecggykisnuxbvgbmfh')) {
+      localStorage.removeItem(STORE.url);
+      localStorage.removeItem(STORE.key);
+      localStorage.removeItem(STORE.disableCloud);
+    }
+  } catch (e) { /* storage may be blocked — the baked config still works */ }
 
   const el = (id) => document.getElementById(id);
 
@@ -275,6 +285,18 @@
       .maybeSingle();
     if (error) throw error;
     return data ? data.value : null;
+  }
+
+  // If the cloud PIN is empty, share this device's PIN so other devices unlock with the same one.
+  async function ensureCloudPin() {
+    const cloudHash = await cloudPin();
+    const localHash = localStorage.getItem(STORE.pin);
+    if (!cloudHash && localHash) {
+      try {
+        await state.supabase.from('anshika_config')
+          .upsert({ key: 'pin_hash', value: localHash, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      } catch (_) { /* non-fatal: local PIN still works here */ }
+    }
   }
 
   async function savePin(hash) {
@@ -796,7 +818,7 @@
     state.cloudIssue = '';
     if (await ensureClient()) {
       try {
-        await cloudPin();
+        await ensureCloudPin();
         state.mode = 'cloud';
       } catch (error) {
         state.mode = 'local';
@@ -1356,7 +1378,7 @@
     const cfg = savedCloudConfig();
     if (cfg.url && cfg.key && await ensureClient()) {
       try {
-        await cloudPin();
+        await ensureCloudPin();
         state.mode = 'cloud';
         state.cloudIssue = '';
       } catch (error) {
