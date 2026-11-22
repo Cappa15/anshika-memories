@@ -17,7 +17,8 @@
     playlist: 'anshika.playlist',
     wishes: 'anshika.wishes',
     voiceUrl: 'anshika.voiceUrl',
-    voiceCustom: 'anshika.voiceCustom'
+    voiceCustom: 'anshika.voiceCustom',
+    disableCloud: 'anshika.disableCloud'
   };
 
   // Edit these to personalise the story sections.
@@ -99,6 +100,13 @@
   const MAX_IMAGE_EDGE = 1800;                  // resize big photos before upload
   const JPEG_QUALITY = 0.84;
   const DEFAULT_VOICE = 'anshika-voice-note.mp3'; // bundled voice note — plays out of the box
+
+  // Cloud is built in, so every device shares the same memories and PIN.
+  // Changing these later only requires editing this file and re-uploading it.
+  const BAKED_CLOUD = {
+    url: 'https://cecggykisnuxbvgbmfh.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlZ2NnZ3lraXNudXhidmdibWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNjMxMzAsImV4cCI6MjExMDkzOTEzMH0.IBhIB34887-QmHhda2r_4oijadri8c-IjiZlX5zSM9g'
+  };
 
   const el = (id) => document.getElementById(id);
 
@@ -240,7 +248,11 @@
   ------------------------------------------------------- */
 
   function savedCloudConfig() {
-    return { url: localStorage.getItem(STORE.url) || '', key: localStorage.getItem(STORE.key) || '' };
+    if (localStorage.getItem(STORE.disableCloud) === '1') return { url: '', key: '' };
+    return {
+      url: localStorage.getItem(STORE.url) || BAKED_CLOUD.url,
+      key: localStorage.getItem(STORE.key) || BAKED_CLOUD.key
+    };
   }
 
   async function ensureClient() {
@@ -1487,6 +1499,7 @@
             .upsert({ key: 'pin_hash', value: state.pinHash, updated_at: new Date().toISOString() }, { onConflict: 'key' });
           if (pinError) throw pinError;
         }
+        localStorage.removeItem(STORE.disableCloud);
         localStorage.setItem(STORE.url, url);
         localStorage.setItem(STORE.key, key);
         localStorage.setItem(STORE.bucket, bucket);
@@ -1508,6 +1521,7 @@
 
     el('useLocalBtn').addEventListener('click', () => {
       [STORE.url, STORE.key, STORE.bucket].forEach((key) => localStorage.removeItem(key));
+      localStorage.setItem(STORE.disableCloud, '1');
       state.supabase = null; state.mode = 'local'; state.cloudIssue = '';
       closeModal('settingsModal');
       updateModePill();
